@@ -69,7 +69,6 @@ class FusedModel(object):
 
         x_convs = tf.nn.dropout(x_convs, self.dropout_keep_prob)
         with tf.name_scope("CNN_Part_Transfer"):
-
             weight_cnn = tf.Variable(tf.truncated_normal([3 * filter_num, mesh_class_num], stddev=0.1))
             biase_cnn = tf.Variable(tf.truncated_normal([mesh_class_num], stddev=0.1))
             logits_cnn = tf.matmul(x_convs, weight_cnn) + biase_cnn
@@ -79,7 +78,8 @@ class FusedModel(object):
             self.score_cnn_t = tf.nn.sigmoid(logits_cnn)
             ones_t = tf.ones_like(self.y_t)
             zeros_t = tf.zeros_like(self.y_t)
-            self.prediction_cnn_t = tf.cast(tf.where(tf.greater(self.score_cnn_t, threshold), ones_t, zeros_t), tf.int32)
+            self.prediction_cnn_t = tf.cast(tf.where(tf.greater(self.score_cnn_t, threshold), ones_t, zeros_t),
+                                            tf.int32)
 
         with tf.name_scope("CNN_Part"):
             weight_cnn = tf.Variable(tf.truncated_normal([3 * filter_num, class_num], stddev=0.1))
@@ -100,11 +100,11 @@ class FusedModel(object):
 
     def conv1d(sef, x, W, b):
         x = tf.reshape(x, shape=[-1, time_steps, embedding_size])
-        x = tf.nn.conv1d(x, W, 1, padding='SAME')
-        x = tf.nn.bias_add(x, b)
+        Fx = tf.nn.conv1d(x, W, 1, padding='SAME')
+        Fx = tf.nn.bias_add(Fx, b)
         # shape=(n,time_steps,filter_num)
-        h = tf.nn.relu(x)
-
+        Fx = tf.nn.relu(x)
+        h = Fx + x
         print('conv size:', h.get_shape().as_list())
 
         pooled = tf.reduce_max(h, axis=1)

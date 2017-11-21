@@ -25,15 +25,21 @@ threshold = 0.20
 class FusedModel(object):
     def __init__(self, embeddings):
         weights = {
-            'wc1': tf.Variable(tf.truncated_normal([filter_sizes[0], embedding_size, filter_num], stddev=0.1)),
-            'wc2': tf.Variable(tf.truncated_normal([filter_sizes[1], embedding_size, filter_num], stddev=0.1)),
-            'wc3': tf.Variable(tf.truncated_normal([filter_sizes[2], embedding_size, filter_num], stddev=0.1))
+            'wc1': tf.Variable(tf.truncated_normal([filter_sizes[0], embedding_size, 1, 32], stddev=0.1)),
+            'wc2': tf.Variable(tf.truncated_normal([filter_sizes[1], embedding_size, 1, 32], stddev=0.1)),
+            'wc3': tf.Variable(tf.truncated_normal([filter_sizes[2], embedding_size, 1, 32], stddev=0.1)),
+            'wc4': tf.Variable(tf.truncated_normal([filter_sizes[0], embedding_size, 33, filter_num], stddev=0.1)),
+            'wc5': tf.Variable(tf.truncated_normal([filter_sizes[1], embedding_size, 33, filter_num], stddev=0.1)),
+            'wc6': tf.Variable(tf.truncated_normal([filter_sizes[2], embedding_size, 33, filter_num], stddev=0.1))
         }
 
         biases = {
-            'bc1': tf.Variable(tf.truncated_normal([filter_num], stddev=0.1)),
-            'bc2': tf.Variable(tf.truncated_normal([filter_num], stddev=0.1)),
-            'bc3': tf.Variable(tf.truncated_normal([filter_num], stddev=0.1))
+            'bc1': tf.Variable(tf.truncated_normal([32], stddev=0.1)),
+            'bc2': tf.Variable(tf.truncated_normal([32], stddev=0.1)),
+            'bc3': tf.Variable(tf.truncated_normal([32], stddev=0.1)),
+            'bc4': tf.Variable(tf.truncated_normal([filter_num], stddev=0.1)),
+            'bc5': tf.Variable(tf.truncated_normal([filter_num], stddev=0.1)),
+            'bc6': tf.Variable(tf.truncated_normal([filter_num], stddev=0.1))
         }
 
         # define placehold
@@ -98,14 +104,27 @@ class FusedModel(object):
             self.score_fused = tf.nn.sigmoid(logits_fused)
             self.prediction_fused = tf.cast(tf.where(tf.greater(self.score_fused, threshold), ones, zeros), tf.int32)
 
-    def conv1d(sef, x, W, b):
-        x = tf.reshape(x, shape=[-1, time_steps, embedding_size])
-        Fx = tf.nn.conv1d(x, W, 1, padding='SAME')
+    def conv2d(sef, x, W, b):
+        x = tf.reshape(x, shape=[-1, time_steps, embedding_size, 1])
+        Fx = tf.nn.conv2d(x, W, [1, 1, 1, 1], padding='SAME')
         Fx = tf.nn.bias_add(Fx, b)
-        # shape=(n,time_steps,filter_num)
-        Fx = tf.nn.relu(x)
-        h = Fx + x
+        Fx = tf.concat([Fx, x], axis=3)
+        h = tf.nn.relu(Fx)
         print('conv size:', h.get_shape().as_list())
+
+        Fx = tf.nn.conv2d(x, W, [1, 1, 1, 1], padding='SAME')
+        Fx = tf.nn.bias_add(Fx, b)
+        Fx = tf.concat([Fx, x], axis=3)
+        h = tf.nn.relu(Fx)
+
+        return h
+
+    def conv1d(sef, x, kernel_size, W, b):
+        Fx = tf.nn.conv2d(x, W, [1, kernel_size, embedding_size, 1], padding='SAME')
+        Fx = tf.nn.bias_add(Fx, b)
+        h = tf.nn.relu(Fx)
+        h = tf.reshape(h, shape=[-1, time_steps, filter_num])
+        print('conv2d size:', h.get_shape().as_list())
 
         pooled = tf.reduce_max(h, axis=1)
         print('pooled size:', pooled.get_shape().as_list())
@@ -113,9 +132,14 @@ class FusedModel(object):
 
     def multi_conv(self, x, weights, biases):
         # Convolution Layer
-        conv1 = self.conv1d(x, weights['wc1'], biases['bc1'])
-        conv2 = self.conv1d(x, weights['wc2'], biases['bc2'])
-        conv3 = self.conv1d(x, weights['wc3'], biases['bc3'])
+        conv1 = self.conv2d(x, weights['wc1'], biases['bc1'])
+        conv2 = self.conv2d(x, weights['wc2'], biases['bc2'])
+        conv3 = self.conv2d(x, weights['wc3'], biases['bc3'])
+
+        conv4 = self.conv1d(conv1, filter_sizes[0], weights['wc4'], biases['bc4'])
+        conv5 = self.conv1d(conv2, filter_sizes[1], weights['wc5'], biases['bc5'])
+        conv6 = self.conv1d(conv3, filter_sizes[2], weights['wc6'], biases['bc6'])
+
         #  n*time_steps*(3*filter_num)
-        convs = tf.concat([conv1, conv2, conv3], 1)
+        convs = tf.concat([conv4, conv5, conv6], 1)
         return convs

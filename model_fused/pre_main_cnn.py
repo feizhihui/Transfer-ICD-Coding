@@ -68,7 +68,7 @@ with tf.Session() as sess:
     # validataion(model.prediction_cnn)
 
     # begin to save the model!
-    filename = '../MODEL/TransferModel'
+    filename = '../MODEL/TransferModel_seq'
     print("Saving model to %s..." % (filename))
     new_saver = tf.train.Saver()  # this saver saves all variables that now exist, including Adagrad variables
     new_saver.save(sess, filename)

@@ -54,27 +54,27 @@ def micro_score(output, label):
 
 
 saver = tf.train.Saver()
-filename = '../MODEL/TransferModel'
+filename = '../MODEL/TransferModel_seq'
 with tf.Session() as sess:
     if transfer_learning:
         saver.restore(sess, filename)
     else:
         sess.run(tf.global_variables_initializer())
-    print('pretraining D2V Part')
-    for epoch in range(epoch_num_d2v):
-        master.shuffle()
-        for iter, (batch_x, batch_docx, batch_y) in enumerate(master.batch_iter(batch_size)):
-            loss_fetch, output, _ = sess.run([model.loss_d2v, model.prediction_d2v, model.optimizer_d2v],
-                                             feed_dict={model.doc_x: batch_docx, model.y: batch_y,
-                                                        model.dropout_keep_prob: keep_pro})
-            if iter % 100 == 0:
-                print("===D2VPart===")
-                MiP, MiR, MiF, P_NUM, T_NUM = micro_score(output, batch_y)
-                print("epoch:%d  iter:%d, mean loss:%.3f,  PNum:%.2f, TNum:%.2f" % (
-                    epoch + 1, iter + 1, loss_fetch, P_NUM, T_NUM))
-                print("Micro-Precision:%.3f, Micro-Recall:%.3f, Micro-F Measure:%.3f" % (MiP, MiR, MiF))
-
-    validataion(model.prediction_d2v)
+    # print('pretraining D2V Part')
+    # for epoch in range(epoch_num_d2v):
+    #     master.shuffle()
+    #     for iter, (batch_x, batch_docx, batch_y) in enumerate(master.batch_iter(batch_size)):
+    #         loss_fetch, output, _ = sess.run([model.loss_d2v, model.prediction_d2v, model.optimizer_d2v],
+    #                                          feed_dict={model.doc_x: batch_docx, model.y: batch_y,
+    #                                                     model.dropout_keep_prob: keep_pro})
+    #         if iter % 100 == 0:
+    #             print("===D2VPart===")
+    #             MiP, MiR, MiF, P_NUM, T_NUM = micro_score(output, batch_y)
+    #             print("epoch:%d  iter:%d, mean loss:%.3f,  PNum:%.2f, TNum:%.2f" % (
+    #                 epoch + 1, iter + 1, loss_fetch, P_NUM, T_NUM))
+    #             print("Micro-Precision:%.3f, Micro-Recall:%.3f, Micro-F Measure:%.3f" % (MiP, MiR, MiF))
+    #
+    # validataion(model.prediction_d2v)
     print('pretraining CNN Part')
     for epoch in range(epoch_num_cnn):
         master.shuffle()

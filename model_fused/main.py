@@ -11,7 +11,7 @@ master = data_input.data_master()
 
 batch_size = 256
 epoch_num_d2v = 18
-epoch_num_cnn = 13
+epoch_num_cnn = 18
 epoch_num_fused = 3
 keep_pro = 0.9
 transfer_learning = True
@@ -21,7 +21,7 @@ model = FusedModel.FusedModel(master.embeddings)
 
 def validataion(model_prediction):
     # model.prediction_fused
-    print('begin to test:')
+    print('>>>>>>>>>begin to test:')
     test_labels = master.change_multi_hot(master.test_labels)
     step_size = 300
     outputs = []
@@ -37,8 +37,8 @@ def validataion(model_prediction):
     outputs = np.concatenate(outputs, axis=0)
 
     MiP, MiR, MiF, P_NUM, T_NUM = micro_score(outputs, test_labels)
-    print("Final Result:  PredictNum:%.2f, TrueNum:%.2f" % (P_NUM, T_NUM))
-    print("Micro-Precision:%.3f, Micro-Recall:%.3f, Micro-F Measure:%.3f" % (MiP, MiR, MiF))
+    print(">>>>>>>>>Final Result:  PredictNum:%.2f, TrueNum:%.2f" % (P_NUM, T_NUM))
+    print(">>>>>>>>>Micro-Precision:%.3f, Micro-Recall:%.3f, Micro-F Measure:%.3f" % (MiP, MiR, MiF))
 
 
 def micro_score(output, label):

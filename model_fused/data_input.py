@@ -3,7 +3,7 @@ import pickle
 import numpy as np
 import random
 
-time_steps = 600
+time_steps = 700
 class_num = 6984
 training_rate = 0.9
 shuffle = False

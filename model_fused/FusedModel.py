@@ -11,7 +11,7 @@ import data_input
 embedding_size = 100
 doc_embedding_size = 128
 doc_hidden_size = 64
-time_steps = 600
+time_steps = 700
 class_num = 6984
 mesh_class_num = 27677
 

@@ -14,4 +14,4 @@ TF_CPP_MIN_LOG_LEVEL	1  # 显示信息的层级（显示全部，只显示 warni
 >```python
 import os
 os.environ["CUDA_VISIABLE_DEVICES"]="3"
- ```python
+```python

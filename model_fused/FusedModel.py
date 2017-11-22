@@ -16,7 +16,7 @@ class_num = 6984
 mesh_class_num = 27677
 
 filter_num = 96
-learning_rate = 0.005
+learning_rate = 0.001
 # fixed size 3
 filter_sizes = [2, 3, 4]
 threshold = 0.20

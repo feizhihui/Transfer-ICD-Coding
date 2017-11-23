@@ -99,7 +99,6 @@ class FusedModel(object):
             self.prediction_fused = tf.cast(tf.where(tf.greater(self.score_fused, threshold), ones, zeros), tf.int32)
 
     def conv1d(sef, x, W, b, pooled=False):
-        x = tf.reshape(x, shape=[-1, time_steps, embedding_size])
         x = tf.nn.conv1d(x, W, 1, padding='SAME')
         x = tf.nn.bias_add(x, b)
         # shape=(n,time_steps,filter_num)
@@ -107,9 +106,9 @@ class FusedModel(object):
 
         print('conv size:', h.get_shape().as_list())
         if pooled:
-            pooled = tf.reduce_max(h, axis=1)
-            print('pooled size:', pooled.get_shape().as_list())
-        return pooled
+            h = tf.reduce_max(h, axis=1)
+            print('pooled size:', h.get_shape().as_list())
+        return h
 
     def multi_conv(self, x, weights, biases):
         # Convolution Layer

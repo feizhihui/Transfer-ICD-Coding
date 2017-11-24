@@ -47,7 +47,6 @@ class FusedModel(object):
 
         x_convs = self.multi_conv(x_emb, weights, biases)
         print('after multiply convolutions: ', x_convs)
-        x_convs = tf.reshape(x_convs, [-1, 3 * filter_num])
         # name="dW",
         dW = tf.Variable(tf.truncated_normal([doc_embedding_size, doc_hidden_size], stddev=0.1),
                          name="doc_embedding",
@@ -69,7 +68,7 @@ class FusedModel(object):
 
         x_convs = tf.nn.dropout(x_convs, self.dropout_keep_prob)
         with tf.name_scope("CNN_Part_Transfer"):
-            weight_cnn = tf.Variable(tf.truncated_normal([3 * filter_num, mesh_class_num], stddev=0.1))
+            weight_cnn = tf.Variable(tf.truncated_normal([filter_num, mesh_class_num], stddev=0.1))
             biase_cnn = tf.Variable(tf.truncated_normal([mesh_class_num], stddev=0.1))
             logits_cnn = tf.matmul(x_convs, weight_cnn) + biase_cnn
             self.loss_cnn_t = tf.reduce_mean(
@@ -82,7 +81,7 @@ class FusedModel(object):
                                             tf.int32)
 
         with tf.name_scope("CNN_Part"):
-            weight_cnn = tf.Variable(tf.truncated_normal([3 * filter_num, class_num], stddev=0.1))
+            weight_cnn = tf.Variable(tf.truncated_normal([filter_num, class_num], stddev=0.1))
             biase_cnn = tf.Variable(tf.truncated_normal([class_num], stddev=0.1))
             logits_cnn = tf.matmul(x_convs, weight_cnn) + biase_cnn
             self.loss_cnn = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.y, logits=logits_cnn))
@@ -99,6 +98,7 @@ class FusedModel(object):
             self.prediction_fused = tf.cast(tf.where(tf.greater(self.score_fused, threshold), ones, zeros), tf.int32)
 
     def conv1d(sef, x, W, b, pooled=False):
+        print('x size:', x.get_shape().as_list())
         x = tf.nn.conv1d(x, W, 1, padding='SAME')
         x = tf.nn.bias_add(x, b)
         # shape=(n,time_steps,filter_num)

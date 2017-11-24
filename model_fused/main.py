@@ -11,8 +11,8 @@ master = data_input.data_master()
 
 batch_size = 256
 epoch_num_d2v = 18
-epoch_num_cnn = 18
-epoch_num_fused = 3
+epoch_num_cnn = 20
+epoch_num_fused = 7
 keep_pro = 0.9
 transfer_learning = True
 

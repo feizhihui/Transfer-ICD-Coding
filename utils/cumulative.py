@@ -60,4 +60,5 @@ plt.axis([-100, 7000, 0, 1.05])
 plt.title('ICD-9 Code Distribution')  # give plot a title
 plt.xlabel('Number of Codes')  # make axis labels
 plt.ylabel('Cumulative Frequency of Codes Covered')
+plt.savefig("examples.tif")
 plt.show()

@@ -1,6 +1,6 @@
 # encoding=utf-8
 import tensorflow as tf
-import data_input
+import numpy as np
 
 # weight initialize
 # dropout
@@ -9,14 +9,12 @@ import data_input
 
 
 embedding_size = 100
-doc_embedding_size = 128
-doc_hidden_size = 64
 time_steps = 700
 class_num = 6984
 mesh_class_num = 27677
 
-filter_num = 96
-learning_rate = 0.001
+filter_num = 64
+learning_rate = 0.005
 # fixed size 3
 filter_sizes = [2, 3, 4]
 threshold = 0.20
@@ -26,8 +24,10 @@ class FusedModel(object):
     def __init__(self, embeddings):
         weights = {
             'wc1': tf.Variable(tf.truncated_normal([filter_sizes[0], embedding_size, filter_num], stddev=0.1)),
-            'wc2': tf.Variable(tf.truncated_normal([filter_sizes[1], embedding_size, filter_num], stddev=0.1)),
-            'wc3': tf.Variable(tf.truncated_normal([filter_sizes[2], embedding_size, filter_num], stddev=0.1))
+            'wc2': tf.Variable(
+                tf.truncated_normal([filter_sizes[1], embedding_size, filter_num], stddev=0.1)),
+            'wc3': tf.Variable(
+                tf.truncated_normal([filter_sizes[2], embedding_size, filter_num], stddev=0.1))
         }
 
         biases = {
@@ -49,15 +49,13 @@ class FusedModel(object):
         print('after multiply convolutions: ', x_convs)
         x_convs = tf.reshape(x_convs, [-1, 3 * filter_num])
 
-
-
         ones = tf.ones_like(self.y)
         zeros = tf.zeros_like(self.y)
 
         x_convs = tf.nn.dropout(x_convs, self.dropout_keep_prob)
         with tf.name_scope("CNN_Part_Transfer"):
-
-            weight_cnn = tf.Variable(tf.truncated_normal([3 * filter_num, mesh_class_num], stddev=0.1))
+            weight_cnn = tf.Variable(
+                tf.truncated_normal([3 * filter_num, mesh_class_num]) * np.sqrt(2. / (3 * filter_num)))
             biase_cnn = tf.Variable(tf.truncated_normal([mesh_class_num], stddev=0.1))
             logits_cnn = tf.matmul(x_convs, weight_cnn) + biase_cnn
             self.loss_cnn_t = tf.reduce_mean(
@@ -66,17 +64,18 @@ class FusedModel(object):
             self.score_cnn_t = tf.nn.sigmoid(logits_cnn)
             ones_t = tf.ones_like(self.y_t)
             zeros_t = tf.zeros_like(self.y_t)
-            self.prediction_cnn_t = tf.cast(tf.where(tf.greater(self.score_cnn_t, threshold), ones_t, zeros_t), tf.int32)
+            self.prediction_cnn_t = tf.cast(tf.where(tf.greater(self.score_cnn_t, threshold), ones_t, zeros_t),
+                                            tf.int32)
 
         with tf.name_scope("CNN_Part"):
-            weight_cnn = tf.Variable(tf.truncated_normal([3 * filter_num, class_num], stddev=0.1))
+            weight_cnn = tf.Variable(
+                tf.truncated_normal([3 * filter_num, class_num]) * np.sqrt(2. / (3 * filter_num)))
             biase_cnn = tf.Variable(tf.truncated_normal([class_num], stddev=0.1))
             logits_cnn = tf.matmul(x_convs, weight_cnn) + biase_cnn
             self.loss_cnn = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.y, logits=logits_cnn))
             self.optimizer_cnn = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(self.loss_cnn)
             self.score_cnn = tf.nn.sigmoid(logits_cnn)
             self.prediction_cnn = tf.cast(tf.where(tf.greater(self.score_cnn, threshold), ones, zeros), tf.int32)
-
 
     def conv1d(sef, x, W, b):
         x = tf.reshape(x, shape=[-1, time_steps, embedding_size])

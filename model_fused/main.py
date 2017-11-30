@@ -10,12 +10,12 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
 master = data_input.data_master()
 
-batch_size = 256
-epoch_num_d2v = 18
-epoch_num_cnn = 18
-epoch_num_fused = 10
+batch_size = 128
+
+epoch_num_cnn = 14
+
 keep_pro = 0.9
-transfer_learning = True
+transfer_learning = False
 
 model = FusedModel.FusedModel(master.embeddings)
 
@@ -28,13 +28,11 @@ def validataion(model_prediction):
     outputs = []
     for i in range(0, len(master.test_sentences), step_size):
         test_sentences_batch = master.test_sentences[i:i + step_size]
-        test_docs_batch = master.test_docs[i:i + step_size]
         test_labels_batch = test_labels[i:i + step_size]
         output = sess.run(model_prediction,
-                          feed_dict={model.x: test_sentences_batch, model.doc_x: test_docs_batch,
-                                     model.y: test_labels_batch, model.dropout_keep_prob: 1.0})
+                          feed_dict={model.x: test_sentences_batch, model.y: test_labels_batch,
+                                     model.dropout_keep_prob: 1.0})
         outputs.append(output)
-
     outputs = np.concatenate(outputs, axis=0)
 
     MiP, MiR, MiF, P_NUM, T_NUM = micro_score(outputs, test_labels)
@@ -65,7 +63,7 @@ with tf.Session() as sess:
     print('pretraining CNN Part')
     for epoch in range(epoch_num_cnn):
         master.shuffle()
-        for iter, (batch_x, batch_docx, batch_y) in enumerate(master.batch_iter(batch_size)):
+        for iter, (batch_x, batch_y) in enumerate(master.batch_iter(batch_size)):
             loss_fetch, output, _ = sess.run([model.loss_cnn, model.prediction_cnn, model.optimizer_cnn],
                                              feed_dict={model.x: batch_x, model.y: batch_y,
                                                         model.dropout_keep_prob: keep_pro})
@@ -77,4 +75,3 @@ with tf.Session() as sess:
                 print("Micro-Precision:%.3f, Micro-Recall:%.3f, Micro-F Measure:%.3f" % (MiP, MiR, MiF))
 
     validataion(model.prediction_cnn)
-

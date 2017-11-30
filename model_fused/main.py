@@ -10,9 +10,9 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
 master = data_input.data_master()
 
-batch_size = 128
+batch_size = 256
 
-epoch_num_cnn = 14
+epoch_num_cnn = 27
 
 keep_pro = 0.9
 transfer_learning = False

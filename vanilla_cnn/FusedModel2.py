@@ -1,6 +1,7 @@
 # encoding=utf-8
 import tensorflow as tf
 from tensorflow.contrib import layers
+import numpy as np
 
 embedding_size = 100
 doc_embedding_size = 128
@@ -81,21 +82,20 @@ class FusedModel(object):
             self.prediction_cnn = tf.cast(tf.where(tf.greater(self.score_cnn, threshold), ones, zeros), tf.int32)
 
         with tf.name_scope("Fused_Part"):
-            # fn_input = tf.concat([logits_cnn, doc_x_], axis=1)
-            fn_input = logits_cnn
+            fn_input = tf.concat([logits_cnn, doc_x_], axis=1)
             fn_input = tf.nn.dropout(fn_input, self.dropout_keep_prob)
-            # weights_f = tf.Variable(tf.truncated_normal([cnn_feature_size + doc_feature_size, class_num], stddev=0.1))
-            weights_f = tf.Variable(tf.truncated_normal([cnn_feature_size, class_num], stddev=0.1))
+            weights_f = tf.Variable(tf.truncated_normal([cnn_feature_size + doc_feature_size, class_num], stddev=0.1))
 
             biases_f = tf.Variable(tf.truncated_normal([class_num], stddev=0.1))
 
             logits_fused = tf.matmul(fn_input, weights_f) + biases_f
 
             self.loss_fused = tf.reduce_mean(
-                tf.nn.sigmoid_cross_entropy_with_logits(labels=self.y, logits=logits_fused))
+            tf.nn.sigmoid_cross_entropy_with_logits(labels=self.y, logits=logits_fused))
             self.optimizer_fused = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(self.loss_fused)
             self.score_fused = tf.nn.sigmoid(logits_fused)
             self.prediction_fused = tf.cast(tf.where(tf.greater(self.score_fused, threshold), ones, zeros), tf.int32)
+
 
     def conv1d(sef, x, W, b):
         x = tf.reshape(x, shape=[-1, time_steps, embedding_size])
@@ -109,6 +109,7 @@ class FusedModel(object):
         pooled = tf.reduce_max(h, axis=1)
         print('pooled size:', pooled.get_shape().as_list())
         return pooled
+
 
     def multi_conv(self, x, weights, biases):
         # Convolution Layer

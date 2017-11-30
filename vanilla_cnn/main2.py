@@ -9,10 +9,10 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
 master = data_input2.data_master()
 
-batch_size = 256
+batch_size = 256  # 512
 epoch_num_d2v = 15
 epoch_num_cnn = 22
-epoch_num_fused = 35
+epoch_num_fused = 25
 keep_pro = 0.9
 
 model = FusedModel2.FusedModel(master.embeddings)
@@ -38,8 +38,8 @@ def validataion(model_prediction):
     MiP, MiR, MiF, P_NUM, T_NUM = micro_score(outputs, test_labels)
     print(">>>>>> Final Result:  PredictNum:%.2f, TrueNum:%.2f" % (P_NUM, T_NUM))
     print(">>>>>> Micro-Precision:%.3f, Micro-Recall:%.3f, Micro-F Measure:%.3f" % (MiP, MiR, MiF))
-    MaP, MaR, MaF = macro_score(outputs, test_labels)
-    print(">>>>>> Macro-Precision:%.3f, Macro-Recall:%.3f, Macro-F Measure:%.3f" % (MaP, MaR, MaF))
+    # MaP, MaR, MaF = macro_score(outputs, test_labels)
+    # print(">>>>>> Macro-Precision:%.3f, Macro-Recall:%.3f, Macro-F Measure:%.3f" % (MaP, MaR, MaF))
 
 
 def micro_score(output, label):
@@ -55,7 +55,6 @@ def micro_score(output, label):
 
 
 def macro_score(output, label):
-
     total_P = np.sum(output, axis=0)
     total_R = np.sum(label, axis=0)
     TP = np.sum(output * label, axis=0)
@@ -67,34 +66,34 @@ def macro_score(output, label):
 
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
-    # print('pretraining D2V Part')
-    # for epoch in range(epoch_num_d2v):
-    #     master.shuffle()
-    #     for iter, (batch_x, batch_docx, batch_y) in enumerate(master.batch_iter(batch_size)):
-    #         loss_fetch, output, _ = sess.run([model.loss_d2v, model.prediction_d2v, model.optimizer_d2v],
-    #                                          feed_dict={model.doc_x: batch_docx, model.y: batch_y,
-    #                                                     model.dropout_keep_prob: keep_pro})
-    #         if iter % 100 == 0:
-    #             print("===D2VPart===")
-    #             MiP, MiR, MiF, P_NUM, T_NUM = micro_score(output, batch_y)
-    #             print("epoch:%d  iter:%d, mean loss:%.3f,  PNum:%.2f, TNum:%.2f" % (
-    #                 epoch + 1, iter + 1, loss_fetch, P_NUM, T_NUM))
-    #             print("Micro-Precision:%.3f, Micro-Recall:%.3f, Micro-F Measure:%.3f" % (MiP, MiR, MiF))
-    # validataion(model.prediction_d2v)
-    # print('pretraining CNN Part')
-    # for epoch in range(epoch_num_cnn):
-    #     master.shuffle()
-    #     for iter, (batch_x, batch_docx, batch_y) in enumerate(master.batch_iter(batch_size)):
-    #         loss_fetch, output, _ = sess.run([model.loss_cnn, model.prediction_cnn, model.optimizer_cnn],
-    #                                          feed_dict={model.x: batch_x, model.y: batch_y,
-    #                                                     model.dropout_keep_prob: keep_pro})
-    #         if iter % 100 == 0:
-    #             print("===CNNPart===")
-    #             MiP, MiR, MiF, P_NUM, T_NUM = micro_score(output, batch_y)
-    #             print("epoch:%d  iter:%d, mean loss:%.3f,  PNum:%.2f, TNum:%.2f" % (
-    #                 epoch + 1, iter + 1, loss_fetch, P_NUM, T_NUM))
-    #             print("Micro-Precision:%.3f, Micro-Recall:%.3f, Micro-F Measure:%.3f" % (MiP, MiR, MiF))
-    # validataion(model.prediction_cnn)
+    print('pretraining D2V Part')
+    for epoch in range(epoch_num_d2v):
+        master.shuffle()
+        for iter, (batch_x, batch_docx, batch_y) in enumerate(master.batch_iter(batch_size)):
+            loss_fetch, output, _ = sess.run([model.loss_d2v, model.prediction_d2v, model.optimizer_d2v],
+                                             feed_dict={model.doc_x: batch_docx, model.y: batch_y,
+                                                        model.dropout_keep_prob: keep_pro})
+            if iter % 100 == 0:
+                print("===D2VPart===")
+                MiP, MiR, MiF, P_NUM, T_NUM = micro_score(output, batch_y)
+                print("epoch:%d  iter:%d, mean loss:%.3f,  PNum:%.2f, TNum:%.2f" % (
+                    epoch + 1, iter + 1, loss_fetch, P_NUM, T_NUM))
+                print("Micro-Precision:%.3f, Micro-Recall:%.3f, Micro-F Measure:%.3f" % (MiP, MiR, MiF))
+    validataion(model.prediction_d2v)
+    print('pretraining CNN Part')
+    for epoch in range(epoch_num_cnn):
+        master.shuffle()
+        for iter, (batch_x, batch_docx, batch_y) in enumerate(master.batch_iter(batch_size)):
+            loss_fetch, output, _ = sess.run([model.loss_cnn, model.prediction_cnn, model.optimizer_cnn],
+                                             feed_dict={model.x: batch_x, model.y: batch_y,
+                                                        model.dropout_keep_prob: keep_pro})
+            if iter % 100 == 0:
+                print("===CNNPart===")
+                MiP, MiR, MiF, P_NUM, T_NUM = micro_score(output, batch_y)
+                print("epoch:%d  iter:%d, mean loss:%.3f,  PNum:%.2f, TNum:%.2f" % (
+                    epoch + 1, iter + 1, loss_fetch, P_NUM, T_NUM))
+                print("Micro-Precision:%.3f, Micro-Recall:%.3f, Micro-F Measure:%.3f" % (MiP, MiR, MiF))
+    validataion(model.prediction_cnn)
     print('pretraining Fused Part')
     for epoch in range(epoch_num_fused):
         master.shuffle()
@@ -108,5 +107,5 @@ with tf.Session() as sess:
                 print("epoch:%d  iter:%d, mean loss:%.3f,  PNum:%.2f, TNum:%.2f" % (
                     epoch + 1, iter + 1, loss_fetch, P_NUM, T_NUM))
                 print("Micro-Precision:%.3f, Micro-Recall:%.3f, Micro-F Measure:%.3f" % (MiP, MiR, MiF))
-        if epoch >= 20:
+        if epoch >= 5:
             validataion(model.prediction_fused)

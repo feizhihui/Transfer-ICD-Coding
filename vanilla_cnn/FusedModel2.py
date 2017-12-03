@@ -10,7 +10,7 @@ cnn_feature_size = 128
 time_steps = 700
 class_num = 6984
 filter_num = 96
-learning_rate = 0.005
+learning_rate = 0.005  # 0.005
 # fixed size 3
 filter_sizes = [2, 3, 4]
 threshold = 0.2

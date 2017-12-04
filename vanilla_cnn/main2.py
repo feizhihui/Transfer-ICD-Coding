@@ -1,7 +1,7 @@
 # encoding=utf-8
 import tensorflow as tf
 import data_input2
-from FusedModel2 import FusedModel
+from FusedModel2 import TextCNN
 import numpy as np
 import os
 
@@ -13,7 +13,7 @@ batch_size = 256
 epoch_num_cnn = 30
 keep_pro = 0.9
 
-model = FusedModel(master.embeddings)
+model = TextCNN(master.embeddings)
 
 
 def validataion(model_prediction):

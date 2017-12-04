@@ -6,16 +6,16 @@ embedding_size = 128
 
 cnn_feature_size = 128
 
-time_steps = 700
+sequence_lens = 700
 class_num = 6984
 filter_num = 96
-learning_rate = 0.005  # 0.005
+learning_rate = 0.005
 # fixed size 3
 filter_sizes = [2, 3, 4]
 threshold = 0.2
 
 
-class FusedModel(object):
+class TextCNN(object):
     def __init__(self, embeddings):
         weights = {
             'wc1': tf.Variable(tf.truncated_normal([filter_sizes[0], embedding_size, filter_num], stddev=0.1)),
@@ -31,7 +31,7 @@ class FusedModel(object):
 
         # define placehold
         W = tf.Variable(embeddings, name="W", dtype=tf.float32)
-        self.x = tf.placeholder(tf.int32, [None, time_steps])
+        self.x = tf.placeholder(tf.int32, [None, sequence_lens])
         x_emb = tf.nn.embedding_lookup(W, self.x)
         self.y = tf.placeholder(tf.float32, [None, class_num])
         self.dropout_keep_prob = tf.placeholder(tf.float32, name="dropout_keep_prob")
@@ -39,9 +39,6 @@ class FusedModel(object):
         x_convs = self.multi_conv(x_emb, weights, biases)
         print('after multiply convolutions: ', x_convs)
         x_convs = tf.reshape(x_convs, [-1, 3 * filter_num])
-
-        ones = tf.ones_like(self.y)
-        zeros = tf.zeros_like(self.y)
 
         with tf.name_scope("CNN_Part"):
             x_convs = tf.nn.dropout(x_convs, self.dropout_keep_prob)
@@ -59,10 +56,12 @@ class FusedModel(object):
             self.loss_cnn = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=self.y, logits=output))
             self.optimizer_cnn = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(self.loss_cnn)
             self.score_cnn = tf.nn.sigmoid(output)
+            ones = tf.ones_like(self.score_cnn)
+            zeros = tf.zeros_like(ones)
             self.prediction_cnn = tf.cast(tf.where(tf.greater(self.score_cnn, threshold), ones, zeros), tf.int32)
 
     def conv1d(sef, x, W, b):
-        x = tf.reshape(x, shape=[-1, time_steps, embedding_size])
+        x = tf.reshape(x, shape=[-1, sequence_lens, embedding_size])
         x = tf.nn.conv1d(x, W, 1, padding='SAME')
         x = tf.nn.bias_add(x, b)
         # shape=(n,time_steps,filter_num)

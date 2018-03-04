@@ -3,7 +3,8 @@ import json
 import pickle
 
 # total 12834584
-front_select = 6834585
+# front_select = 6834585
+front_select = 128345
 
 big_path = '/media/cb201/8A5EE1D45EE1B959/fzh/allMeSH_2017.json'
 

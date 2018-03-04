@@ -75,5 +75,5 @@ with tf.Session() as sess:
                 print("epoch:%d  iter:%d, mean loss:%.3f,  PNum:%.2f, TNum:%.2f" % (
                     epoch + 1, iter + 1, loss_fetch, P_NUM, T_NUM))
                 print("Micro-Precision:%.3f, Micro-Recall:%.3f, Micro-F Measure:%.3f" % (MiP, MiR, MiF))
-        if epoch >= 20:
+        if epoch >= 10:
             validataion(model.prediction_cnn)

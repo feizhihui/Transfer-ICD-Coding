@@ -8,10 +8,10 @@ cnn_feature_size = 128
 
 sequence_lens = 700
 class_num = 6984
-filter_num = 96
-learning_rate = 0.005
+filter_num = 64
+learning_rate = 0.001
 # fixed size 3
-filter_sizes = [2, 3, 4]
+filter_sizes = [1, 3, 5]
 threshold = 0.2
 
 

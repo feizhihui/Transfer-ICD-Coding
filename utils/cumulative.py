@@ -7,7 +7,7 @@ import collections
 # ====================
 top_num = 6984
 
-diagnosisFile = '../data/raw_data/DIAGNOSES_ICD.csv'
+diagnosisFile = '../DATA/DIAGNOSES_ICD.csv'
 
 icd9list = []
 admset = set()

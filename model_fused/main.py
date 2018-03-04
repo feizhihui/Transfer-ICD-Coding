@@ -6,7 +6,7 @@ import numpy as np
 import os
 
 # LD_LIBRARY_PATH	/usr/local/cuda-8.0/lib64:$LD_LIBRARY_PATH
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 master = data_input.data_master()
 

@@ -4,6 +4,9 @@ import mesh_input
 import FusedModel as FusedModel
 import numpy as np
 import os
+import time
+
+starttime = time.time()
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
@@ -73,3 +76,6 @@ with tf.Session() as sess:
     new_saver = tf.train.Saver()  # this saver saves all variables that now exist, including Adagrad variables
     new_saver.save(sess, filename)
     print("Saved.")
+
+endtime = time.time()
+print((endtime - starttime) / 60, 'mininus')
